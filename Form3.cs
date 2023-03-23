@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Firebase.Auth;
+using Firebase.Auth.Providers;
+using Firebase.Auth.Repository;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -7,14 +10,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using FirebaseAdmin.Auth;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
+
 
 namespace Logando_Firebase;
 public partial class Form3 : Form
 {
-    FirebaseAuth auth = FirebaseAuth.DefaultInstance;
 
     public Form3()
     {
@@ -24,15 +24,26 @@ public partial class Form3 : Form
 
     private void button1_Click(object sender, EventArgs e)
     {
-        FirebaseApp.Create(new AppOptions()
+        var config = new FirebaseAuthConfig
         {
-            Credential = GoogleCredential.FromFile("C:\\Users\\higor\\source\\repos\\Logando Firebase\\bin\\Debug\\net6.0-windows\\google-services.json")
-        });
+            ApiKey = "AIzaSyAbj--ori0WT4Kr4Y7N9A0arv9gFtaTyos",
+            AuthDomain = "listacompras-6e717.firebaseapp.com",
+            Providers = new FirebaseAuthProvider[]
+           {
+                new EmailProvider()
+           },
+            UserRepository = new FileUserRepository("FirebaseSample")
+        };
 
 
         try
         {
-            var user = FirebaseAuth.DefaultInstance.CreateUserAsync(new UserRecordArgs()
+
+            var client = new FirebaseAuthClient(config);
+            MessageBox.Show(client.User.Uid);
+            var usuario = client.CreateUserWithEmailAndPasswordAsync(textBox1.Text, textBox2.Text).Result;
+            MessageBox.Show(usuario.User.Uid);
+            /*var user = FirebaseAuth.DefaultInstance.CreateUserAsync(new UserRecordArgs()
             {
                 Email = textBox1.Text,
                 Password = textBox2.Text,
@@ -41,7 +52,7 @@ public partial class Form3 : Form
             MessageBox.Show(user.TokensValidAfterTimestamp.ToString());
             MessageBox.Show("ID: " + user.Uid);
             MessageBox.Show("Email: " + user.Email);
-            MessageBox.Show("Email Verified: " + user.EmailVerified);
+            MessageBox.Show("Email Verified: " + user.EmailVerified);*/
             this.Hide();
             var form = new Form2();
             form.Closed += fecharFormulario;
@@ -51,7 +62,7 @@ public partial class Form3 : Form
         catch (Exception ex)
         {
             //Lembrar que a senha tem que ter no minimo 6 caracteres
-            if (ex.Message == "One or more errors occurred. (The user with the provided email already exists (EMAIL_EXISTS).)")
+            if (ex.Message.Contains("EMAIL_EXISTS"))
                 MessageBox.Show("Esse email já esta cadastro");
             else
             {
